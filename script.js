@@ -1,23 +1,20 @@
-const express = require('express');
-const fs = require('fs');
-const { v4: uuidv4 } = require('uuid');
+const express = require('express')
+const fs = require('fs')
+const { v4: uuidv4 } = require('uuid')
 
-const app = express();
-const PORT = 3000;
+const app = express()
+const PORT = 3000
 
-// Middleware para interpretar JSON no corpo da requisição
-app.use(express.json());
+app.use(express.json())
 
-// adicionar mensagem
-function addMensagem(nomeAluno, mensagem = "logs.txt") {
+function addMensagem(nomeAluno, mensagem) {
     const idUnico = uuidv4();
-    const dataHoraAtual = new Date();
-    const mensagemFormatada = `${dataHoraAtual.toISOString()} - ${idUnico} - ${nomeAluno} - ${mensagem}\n`
+    const dataHoraAtual = new Date().toISOString().replace("T", " ").split(".")[0]
+    const mensagemFormatada = `${idUnico} - ${dataHoraAtual} - ${nomeAluno} - ${mensagem}\n`
 
     fs.appendFileSync('logs.txt', mensagemFormatada)
+    return idUnico
 }
-
-// rota para dados e mensagem
 app.post('/addMensagem', (req, res) => {
     const { nomeAluno, mensagem } = req.body
 
@@ -26,32 +23,31 @@ app.post('/addMensagem', (req, res) => {
     }
 
     try {
-        addMensagem(nomeAluno, mensagem);
-        res.status(200).json({ message: 'Mensagem adicionada com sucesso!' })
+        const idGerado = addMensagem(nomeAluno, mensagem);
+        res.status(200).json({ id: idGerado, message: 'Mensagem adicionada com sucesso!' })
     } catch (error) {
         res.status(500).json({ error: 'Erro ao adicionar mensagem.' })
     }
-})
+});
 
-//rora p log
-app.post("/logs", (req, res) => {
-    const { nomeAluno } = req.body
-
-    if (!nomeAluno) {
-        return res.status(400).json({ error: 'nomeAluno é obrigatório.' })
-    }
+// Rota para consultar log por ID
+app.get("/logs/:id", (req, res) => {
+    const { id } = req.params
 
     try {
-        const logs = fs.readFileSync('logs.txt', 'utf-8')
-        const logsArray = logs.split('\n').filter(log => log.includes(nomeAluno))
-        res.status(200).json({ logs: logsArray })
+        const logs = fs.readFileSync("logs.txt", "utf8").split("\n").filter(log => log.trim() !== "")
+        const logEncontrado = logs.find(log => log.startsWith(id))
+
+        if (!logEncontrado) {
+            return res.status(404).json({ error: "Log não encontrado." })
+        }
+
+        res.status(200).json({ log: logEncontrado })
     } catch (error) {
-        res.status(500).json({ error: 'Erro ao ler os logs.' })
+        res.status(500).json({ error: "Erro ao ler os logs." })
     }
 })
 
-// iniciar 
 app.listen(PORT, () => {
     console.log(`Servidor rodando em http://localhost:${PORT}`)
 })
-
