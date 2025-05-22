@@ -14,7 +14,7 @@ function addMensagem(nomeAluno, mensagem = "logs.txt") {
     const dataHoraAtual = new Date();
     const mensagemFormatada = `${dataHoraAtual.toISOString()} - ${idUnico} - ${nomeAluno} - ${mensagem}\n`
 
-    fs.appendFileSync('logs.txt', mensagemFormatada);
+    fs.appendFileSync('logs.txt', mensagemFormatada)
 }
 
 // rota para dados e mensagem
@@ -31,7 +31,24 @@ app.post('/addMensagem', (req, res) => {
     } catch (error) {
         res.status(500).json({ error: 'Erro ao adicionar mensagem.' })
     }
-});
+})
+
+//rora p log
+app.post("/logs", (req, res) => {
+    const { nomeAluno } = req.body
+
+    if (!nomeAluno) {
+        return res.status(400).json({ error: 'nomeAluno é obrigatório.' })
+    }
+
+    try {
+        const logs = fs.readFileSync('logs.txt', 'utf-8')
+        const logsArray = logs.split('\n').filter(log => log.includes(nomeAluno))
+        res.status(200).json({ logs: logsArray })
+    } catch (error) {
+        res.status(500).json({ error: 'Erro ao ler os logs.' })
+    }
+})
 
 // iniciar 
 app.listen(PORT, () => {
