@@ -14,7 +14,7 @@ function addMensagem(nomeAluno, mensagem) {
 
     fs.appendFileSync('logs.txt', mensagemFormatada)
     return idUnico
-}
+j}
 app.post('/addMensagem', (req, res) => {
     const { nomeAluno, mensagem } = req.body
 
